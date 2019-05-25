@@ -3,11 +3,11 @@ package ru.javawebinar.topjava.util;
 import ru.javawebinar.topjava.model.UserMeal;
 import ru.javawebinar.topjava.model.UserMealWithExceed;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class UserMealsUtil {
     public static void main(String[] args) {
@@ -19,13 +19,35 @@ public class UserMealsUtil {
                 new UserMeal(LocalDateTime.of(2015, Month.MAY, 31,13,0), "Обед", 500),
                 new UserMeal(LocalDateTime.of(2015, Month.MAY, 31,20,0), "Ужин", 510)
         );
-        getFilteredWithExceeded(mealList, LocalTime.of(7, 0), LocalTime.of(12,0), 2000);
-//        .toLocalDate();
-//        .toLocalTime();
+        System.out.println(getFilteredWithExceeded(mealList, LocalTime.of(7, 0), LocalTime.of(12,0), 2000));
     }
 
     public static List<UserMealWithExceed>  getFilteredWithExceeded(List<UserMeal> mealList, LocalTime startTime, LocalTime endTime, int caloriesPerDay) {
-        // TODO return filtered list with correctly exceeded field
-        return null;
+
+
+        List<UserMealWithExceed> userMealWithExceeds = new ArrayList<>();
+        UserMealWithExceed userMealWithExceed;
+        Map<LocalDate, Integer> days = new HashMap<>();
+
+        for(UserMeal meal : mealList) {
+
+            LocalDate localDate = meal.getDateTime().toLocalDate();
+            int calories = meal.getCalories();
+
+            if (!days.getOrDefault(localDate, calories).equals(calories)) {
+                days.merge(localDate,calories, Integer::sum);
+            } else {
+                days.put(localDate,calories);
+            }
+        }
+
+        for(UserMeal meal : mealList) {
+            if(TimeUtil.isBetween(meal.getDateTime().toLocalTime(), startTime, endTime)) {
+                boolean exceed = days.get(meal.getDateTime().toLocalDate()) > caloriesPerDay;
+                userMealWithExceed = new UserMealWithExceed(meal.getDateTime(), meal.getDescription(), meal.getCalories(), exceed);
+                userMealWithExceeds.add(userMealWithExceed);
+            }
+        }
+        return userMealWithExceeds;
     }
 }
